@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<meta charset="UTF-8">
+	<title>瀑布流</title>
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+  <style>
+  		* {
+  padding: 0;
+  margin: 0;
+}
+html,body {
+  height: 100%;
+  width: 100%;
+}
+body {
+  font-size: 14px;
+  line-height:1.2;
+  color: #a9a9a9;
+}
+a{
+  text-decoration: none;
+  color:#000;
+}
+li {
+  list-style: none;
+}
+.wrap {
+  width:900px;
+  margin: 0 auto;
+  margin-top: 10px;
+}
+.ct {
+  position: relative;
+}
+.clearfix{
+  content: '';
+  display: block;
+  clear: both;
+}
+.list {
+  position: absolute;
+  border: 1px solid #ccc;
+  width: 260px;
+  padding: 5px;
+  margin: 5px;
+  padding-bottom: 20px;
+  transition: all .8s;
+}
+.list > a {
+  display: inline-block;
+}
+.list .title  {
+  margin: 5px 10px;
+}
+.list .content {
+  margin-top: 10px;
+  text-indent: 2em;
+  color: #808080;
+}
+.list .author {
+  position: absolute;
+  right: 10px;
+  color: #d2b48a;
+}
+
+.hide {
+  display: none;
+}
+.loading {
+  visibility: hidden;
+  height: 20px;
+}
+  </style>
+</head>
+<body>
+	<div class="wrap">
+		<ul class="ct clearfix">
+			<!-- <li class="list">
+				<a class="alt" href="http://baijiahao.baidu.com/s?id=1610480907740932223&wfr=newsapp">
+					<h3 class="title">男子发现一窝幼崽, 本以为是小狗, 长大后朋友们都抢着要</h3>
+					<p class="content">"一小伙某天和朋友们一起进山里玩，发现一个草丛里传出阵阵声响，于是走过去扒开草丛一看，居然发现了一窝动物的幼崽。小伙看这些小家伙非常可爱，还以为是小狗崽，正好家里想养几只狗狗，于是小伙便把它们带回了家。本以为是捡到了看门狗，长大后却变成了长毛兔，这个转变应该是好的吧。这样的兔子有谁不爱呢?"</p>
+					<p class="author">—— 手机中国网</p>
+				</a>
+			</li> -->
+			<li class="list hide"></li>
+		</ul>
+		<div class="loading">loading</div>
+	</div>
+	<script>
+		
+var currPage = 1,
+	perPageCount = 10;
+var colHeight = [];
+var nodeWidth = $('.list').outerWidth(true);
+var colNum = Math.floor($('.ct').width()/nodeWidth);
+if(colHeight.length == 0){
+	for(var i=0;i<colNum;i++){
+		colHeight[i] = 0; //[0,0,0]
+	}
+}
+//瀑布流
+function waterFallPlace($node){
+	var idx = 0
+	var minHeight = colHeight[0]
+	for(var i=0;i<colHeight.length;i++){
+ 		if(colHeight[i] < minHeight){
+			minHeight = colHeight[i]
+			idx = i
+ 		}
+ 	}
+	$node.css({
+		left: nodeWidth * idx,
+		top: minHeight,
+		opacity: 1
+	})	
+		colHeight[idx] += $node.outerHeight(true)
+		$('.ct').height(Math.max.apply(null,colHeight))	/// 
+}
+
+$(window).on('scroll',function(){
+ 	if(!isDataArrive) return
+ 	if (isVisible($('.loading'))){
+ 		start()
+ 	}
+ })
+var isDataArrive = true
+start()
+function start(){       
+   getData(function(newsList){ //这个function是callback
+   		console.log(newsList)
+   		isDataArrive = true
+	   	$.each(newsList,function(idx,news){
+	   		var $node = getNode(news)
+	   		// $node.find('img').load(function(){ //图片加载完成后计算
+	   			$('.ct').append($node)
+	   			waterFallPlace($node)
+	   		// })
+	   	})
+   })
+   isDataArrive = false
+}
+//获取数据
+function getData(callback){
+			$.ajax({
+				url: 'http://route.showapi.com/109-35',
+				type: 'GET'	,
+				data: {
+					page: currPage,
+					maxResult: perPageCount,
+					showapi_appid: 73823,
+					showapi_sign: '6c1bc9b9fbeb473aa012e20a649e06c1',
+					title: '动物'
+				},
+				dataType: 'json'
+			}).done(function(ret){
+				console.log(ret)
+				if(ret.showapi_res_code == 0){ //得到的数据里面的内容，如果是0表示获取成功
+					callback(ret.showapi_res_body.pagebean.contentlist)
+					currPage++
+				}
+			}).fail(function(){
+				console.log('erro....')
+			})
+}
+//生成节点
+function getNode(val){
+		var html =`<li class="list">
+				<a class="alt" href="">
+					<h3 class="title"></h3>
+					<p class="content"></p>
+					<p class="author"></p>
+				</a>
+			</li>`	 
+		var $node = $(html)
+			$node.find('.alt').attr('href',val.link)
+			$node.find('.title').text(val.title)
+			$node.find('.content').text(val.desc)
+			$node.find('.author').text(val.source)
+			return $node
+}
+	
+//懒加载
+function isVisible($el){
+	var scrollH = $(window).scrollTop(),
+		winH = $(window).height(),
+		top = $el.offset().top;
+	if(top < scrollH + winH) {
+		return true
+	}else{
+		return false
+	}		
+}
+
+
+	</script>
+</body>
+</html>

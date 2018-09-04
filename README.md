@@ -1,5 +1,5 @@
 # waterfall-news
-### 预览链接 ：https://xcc99.github.io/waterfall-snews/
+### 预览链接 ：https://xcc99.github.io/waterfall-news/
 ### 实现原理：通过ajax获取新闻数据、使用 *瀑布流* 的方式进行布局、使用 *懒加载* 的方式展现新闻
 
 ### 获取数据
